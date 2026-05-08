@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>スタイリッシュ花札 - HANA-AWASE -</title>
+    <style>
+        :root {
+            --bg-color: #121215;
+            --accent-gold: #d4af37;
+            --accent-red: #c9171e;
+            --card-bg: #f8f4e6;
+            --card-border: #1a1a1a;
+            --text-main: #333;
+            --text-light: #f0f0f0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: radial-gradient(circle at 50% 50%, #2a2a35 0%, #121215 100%);
+            color: var(--text-light);
+            font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            text-align: center;
+            padding: 10px 0;
+            background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent);
+            border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+            font-weight: 300;
+            letter-spacing: 4px;
+            color: var(--accent-gold);
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .game-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 10px;
+            max-width: 1000px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* エリア共通 */
+        .player-area, .cpu-area {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            height: 25vh;
+        }
+
+        .field-area {
+            flex: 1;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-content: center;
+            gap: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            position: relative;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+        }
+
+        /* 情報パネル */
+        .info-panel {
+            width: 120px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .score-box {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--accent-gold);
+            text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+        }
+
+        .name-tag {
+            font-size: 0.9rem;
+            color: #aaa;
+            letter-spacing: 1px;
+        }
+
+        /* 手札コンテナ */
+        .hand-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            perspective: 1000px;
+        }
+
+        /* カードのスタイリング */
+        .card {
+            width: 50px;
+            height: 80px;
+            background-color: var(--card-bg);
+            border: 3px solid var(--card-border);
+            border-radius: 4px;
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 4px;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+        }
+
+        @media (min-width: 768px) {
+            .card {
+                width: 70px;
+                height: 112px;
+                border-width: 4px;
+                border-radius: 6px;
+                padding: 6px;
+            }
+        }
+
+        .card.face-down {
+            background-color: var(--accent-red);
+            background-image: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(0,0,0,0.2) 5px, rgba(0,0,0,0.2) 10px);
+            border-color: #8a1014;
+        }
+
+        .card.face-down * {
+            display: none;
+        }
+
+        .card:hover:not(.face-down):not(.disabled) {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 15px rgba(0,0,0,0.5);
+            border-color: var(--accent-gold);
+        }
+
+        .card.selected {
+            transform: translateY(-15px);
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 15px var(--accent-gold);
+        }
+
+        .card.highlight {
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(212, 175, 55, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0); }
+        }
+
+        /* カードの柄・テキスト */
+        .card-month {
+            font-size: 0.7rem;
+            font-weight: bold;
+            color: var(--text-main);
+            text-align: left;
+        }
+
+        .card-icon {
+            font-size: 1.5rem;
+            text-align: center;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @media (min-width: 768px) {
+            .card-icon { font-size: 2.2rem; }
+            .card-month { font-size: 0.9rem; }
+        }
+
+        .card-type {
+            font-size: 0.6rem;
+            text-align: right;
+            font-weight: bold;
+        }
+
+        .type-hikari { color: #d4af37; }
+        .type-tane { color: #c9171e; }
+        .type-tanzaku { color: #4a90e2; }
+        .type-kasu { color: #666; }
+
+        /* 山札・ステータス */
+        .deck-area {
+            position: absolute;
+            top: 50%;
+            left: 20px;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .deck-stack {
+            position: relative;
+            width: 50px;
+            height: 80px;
+        }
+        @media (min-width: 768px) {
+            .deck-stack { width: 70px; height: 112px; }
+        }
+
+        .deck-stack .card {
+            position: absolute;
+            top: 0; left: 0;
+            pointer-events: none;
+        }
+
+        .status-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid var(--accent-gold);
+            padding: 20px 40px;
+            border-radius: 8px;
+            font-size: 1.5rem;
+            color: var(--accent-gold);
+            z-index: 100;
+            display: none;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(0,0,0,0.8);
+        }
+
+        /* 獲得カードの表示（簡易） */
+        .captured-area {
+            width: 100px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2px;
+            align-content: flex-start;
+        }
+        .captured-mini {
+            width: 20px;
+            height: 30px;
+            background: var(--card-bg);
+            border: 1px solid #000;
+            border-radius: 2px;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .captured-mini.hikari { border-color: #d4af37; background: #fff8e7; }
+        .captured-mini.tane { border-color: #c9171e; background: #ffebeb; }
+
+        /* モーダル */
+        #result-modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s;
+        }
+        #result-modal.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .result-content {
+            text-align: center;
+        }
+        .result-title {
+            font-size: 3rem;
+            color: var(--accent-gold);
+            margin-bottom: 20px;
+            letter-spacing: 5px;
+        }
+        .result-score {
+            font-size: 1.5rem;
+            margin: 10px 0;
+        }
+        .btn {
+            margin-top: 30px;
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            background: transparent;
+            color: var(--accent-gold);
+            border: 2px solid var(--accent-gold);
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: inherit;
+            letter-spacing: 2px;
+        }
+        .btn:hover {
+            background: var(--accent-gold);
+            color: var(--bg-color);
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>花札 - HANA-AWASE -</header>
+
+    <div class="game-container">
+        <!-- CPU Area -->
+        <div class="cpu-area">
+            <div class="info-panel">
+                <div class="name-tag">CPU</div>
+                <div class="score-box" id="cpu-score">0</div>
+            </div>
+            <div class="hand-container" id="cpu-hand"></div>
+            <div class="captured-area" id="cpu-captured"></div>
+        </div>
+
+        <!-- Field Area -->
+        <div class="field-area" id="field">
+            <div class="deck-area">
+                <div class="deck-stack" id="deck-stack">
+                    <!-- デッキのビジュアル -->
+                </div>
+                <div class="name-tag">山札: <span id="deck-count">24</span></div>
+            </div>
+        </div>
+
+        <!-- Player Area -->
+        <div class="player-area">
+            <div class="info-panel">
+                <div class="name-tag">YOU</div>
+                <div class="score-box" id="player-score">0</div>
+            </div>
+            <div class="hand-container" id="player-hand"></div>
+            <div class="captured-area" id="player-captured"></div>
+        </div>
+    </div>
+
+    <div class="status-message" id="status-message">あなたの番です</div>
+
+    <div id="result-modal">
+        <div class="result-content">
+            <div class="result-title" id="result-title">勝負あり</div>
+            <div class="result-score">YOU: <span id="final-player-score">0</span> 点</div>
+            <div class="result-score">CPU: <span id="final-cpu-score">0</span> 点</div>
+            <button class="btn" onclick="initGame()">もう一度遊ぶ</button>
+        </div>
+    </div>
+
+    <script>
+        // 花札のデータ定義 (12ヶ月 x 4枚 = 48枚)
+        const MONTHS = ['松', '梅', '桜', '藤', '菖蒲', '牡丹', '萩', '芒', '菊', '紅葉', '柳', '桐'];
+        const ICONS = ['🌲', '🌸', '🌸', '🍇', '💮', '🌺', '🌿', '🌕', '🌼', '🍁', '☔', '🍂'];
+        
+        // 種類: 0=カス(1点), 1=短冊(5点), 2=タネ(10点), 3=光(20点)
+        const CARD_DEFS = [
+            // 1月 松
+            { month: 1, type: 3, name: '松に鶴' }, { month: 1, type: 1, name: '赤短' }, { month: 1, type: 0, name: 'カス' }, { month: 1, type: 0, name: 'カス' },
+            // 2月 梅
+            { month: 2, type: 2, name: '梅に鶯' }, { month: 2, type: 1, name: '赤短' }, { month: 2, type: 0, name: 'カス' }, { month: 2, type: 0, name: 'カス' },
+            // 3月 桜
+            { month: 3, type: 3, name: '桜に幕' }, { month: 3, type: 1, name: '赤短' }, { month: 3, type: 0, name: 'カス' }, { month: 3, type: 0, name: 'カス' },
+            // 4月 藤
+            { month: 4, type: 2, name: '藤に不如帰' }, { month: 4, type: 1, name: '短冊' }, { month: 4, type: 0, name: 'カス' }, { month: 4, type: 0, name: 'カス' },
+            // 5月 菖蒲
+            { month: 5, type: 2, name: '菖蒲に八橋' }, { month: 5, type: 1, name: '短冊' }, { month: 5, type: 0, name: 'カス' }, { month: 5, type: 0, name: 'カス' },
+            // 6月 牡丹
+            { month: 6, type: 2, name: '牡丹に蝶' }, { month: 6, type: 1, name: '青短' }, { month: 6, type: 0, name: 'カス' }, { month: 6, type: 0, name: 'カス' },
+            // 7月 萩
+            { month: 7, type: 2, name: '萩に猪' }, { month: 7, type: 1, name: '短冊' }, { month: 7, type: 0, name: 'カス' }, { month: 7, type: 0, name: 'カス' },
+            // 8月 芒(ススキ)
+            { month: 8, type: 3, name: '芒に月' }, { month: 8, type: 2, name: '芒に雁' }, { month: 8, type: 0, name: 'カス' }, { month: 8, type: 0, name: 'カス' },
+            // 9月 菊
+            { month: 9, type: 2, name: '菊に盃' }, { month: 9, type: 1, name: '青短' }, { month: 9, type: 0, name: 'カス' }, { month: 9, type: 0, name: 'カス' },
+            // 10月 紅葉
+            { month: 10, type: 2, name: '紅葉に鹿' }, { month: 10, type: 1, name: '青短' }, { month: 10, type: 0, name: 'カス' }, { month: 10, type: 0, name: 'カス' },
+            // 11月 柳
+            { month: 11, type: 3, name: '小野道風' }, { month: 11, type: 2, name: '柳に燕' }, { month: 11, type: 1, name: '短冊' }, { month: 11, type: 0, name: '鬼札' },
+            // 12月 桐
+            { month: 12, type: 3, name: '桐に鳳凰' }, { month: 12, type: 0, name: 'カス' }, { month: 12, type: 0, name: 'カス' }, { month: 12, type: 0, name: 'カス' }
+        ];
+
+        const TYPE_LABELS = ['カス', '短冊', 'タネ', '光'];
+        const TYPE_CLASSES = ['type-kasu', 'type-tanzaku', 'type-tane', 'type-hikari'];
+        const POINTS = [1, 5, 10, 20];
+
+        // 状態管理
+        let state = {
+            deck: [],
+            playerHand: [],
+            cpuHand: [],
+            field: [],
+            playerCaptured: [],
+            cpuCaptured: [],
+            turn: 'player', // 'player' or 'cpu'
+            phase: 'wait_hand', // wait_hand, wait_field, drawing, animating
+            selectedHandCard: null,
+            drawnCard: null
+        };
+
+        // ユーティリティ: シャッフル
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // ユーティリティ: カード要素生成
+        function createCardElement(card, faceDown = false) {
+            const el = document.createElement('div');
+            el.className = `card ${faceDown ? 'face-down' : ''}`;
+            el.dataset.id = card.id;
+
+            if (!faceDown) {
+                const monthText = MONTHS[card.month - 1];
+                const iconText = ICONS[card.month - 1];
+                const typeLabel = TYPE_LABELS[card.type];
+                const typeClass = TYPE_CLASSES[card.type];
+
+                el.innerHTML = `
+                    <div class="card-month">${card.month}月 ${monthText}</div>
+                    <div class="card-icon">${iconText}</div>
+                    <div class="card-type ${typeClass}">${typeLabel}</div>
+                `;
+            }
+            return el;
+        }
+
+        // 初期化
+        function initGame() {
+            document.getElementById('result-modal').classList.remove('active');
+            
+            // デッキ生成
+            let tempDeck = CARD_DEFS.map((def, index) => ({
+                id: index,
+                ...def,
+                point: POINTS[def.type]
+            }));
+            
+            state.deck = shuffle(tempDeck);
+            state.playerHand = state.deck.splice(0, 8);
+            state.cpuHand = state.deck.splice(0, 8);
+            state.field = state.deck.splice(0, 8);
+            state.playerCaptured = [];
+            state.cpuCaptured = [];
+            state.turn = 'player';
+            state.phase = 'wait_hand';
+            state.selectedHandCard = null;
+            state.drawnCard = null;
+
+            updateUI();
+            showMessage('あなたの番です', 1500);
+        }
+
+        // UIの更新
+        function updateUI() {
+            // Player Hand
+            const pHandEl = document.getElementById('player-hand');
+            pHandEl.innerHTML = '';
+            state.playerHand.forEach(card => {
+                const el = createCardElement(card);
+                if (state.selectedHandCard && state.selectedHandCard.id === card.id) {
+                    el.classList.add('selected');
+                }
+                el.onclick = () => handleHandClick(card);
+                pHandEl.appendChild(el);
+            });
+
+            // CPU Hand
+            const cHandEl = document.getElementById('cpu-hand');
+            cHandEl.innerHTML = '';
+            state.cpuHand.forEach(card => {
+                const el = createCardElement(card, true); // face down
+                cHandEl.appendChild(el);
+            });
+
+            // Field
+            const fieldEl = document.getElementById('field');
+            // デッキエリア以外を削除
+            Array.from(fieldEl.children).forEach(child => {
+                if (!child.classList.contains('deck-area')) {
+                    fieldEl.removeChild(child);
+                }
+            });
+
+            state.field.forEach(card => {
+                const el = createCardElement(card);
+                // ハイライト処理（手札が選択されている時、マッチする札を光らせる）
+                if (state.selectedHandCard && card.month === state.selectedHandCard.month) {
+                    el.classList.add('highlight');
+                }
+                el.onclick = () => handleFieldClick(card);
+                fieldEl.appendChild(el);
+            });
+
+            // Deck
+            document.getElementById('deck-count').innerText = state.deck.length;
+            const deckStack = document.getElementById('deck-stack');
+            deckStack.innerHTML = '';
+            for(let i=0; i<Math.min(3, state.deck.length); i++) {
+                const el = document.createElement('div');
+                el.className = 'card face-down';
+                el.style.top = `${i * -2}px`;
+                el.style.left = `${i * -2}px`;
+                deckStack.appendChild(el);
+            }
+
+            // Scores
+            const pScore = state.playerCaptured.reduce((sum, c) => sum + c.point, 0);
+            const cScore = state.cpuCaptured.reduce((sum, c) => sum + c.point, 0);
+            document.getElementById('player-score').innerText = pScore;
+            document.getElementById('cpu-score').innerText = cScore;
+
+            // Captured visual (mini icons)
+            renderCaptured('player-captured', state.playerCaptured);
+            renderCaptured('cpu-captured', state.cpuCaptured);
+        }
+
+        function renderCaptured(elementId, capturedArray) {
+            const el = document.getElementById(elementId);
+            el.innerHTML = '';
+            // 光とタネ・短冊のみ目立たせて表示（カスは省略かグレー）
+            capturedArray.sort((a,b) => b.type - a.type).forEach(card => {
+                const mini = document.createElement('div');
+                mini.className = 'captured-mini';
+                if(card.type === 3) mini.classList.add('hikari');
+                if(card.type === 2) mini.classList.add('tane');
+                mini.innerText = ICONS[card.month - 1];
+                el.appendChild(mini);
+            });
+        }
+
+        function showMessage(text, duration = 1000) {
+            const msgEl = document.getElementById('status-message');
+            msgEl.innerText = text;
+            msgEl.style.display = 'block';
+            setTimeout(() => {
+                msgEl.style.display = 'none';
+            }, duration);
+        }
+
+        // プレイヤーのアクション：手札クリック
+        function handleHandClick(card) {
+            if (state.turn !== 'player' || state.phase !== 'wait_hand') return;
+
+            state.selectedHandCard = card;
+            
+            // 場にマッチするカードがあるかチェック
+            const matches = state.field.filter(c => c.month === card.month);
+            
+            if (matches.length === 0) {
+                // マッチなし -> そのまま場に出す
+                state.phase = 'animating';
+                updateUI();
+                setTimeout(() => {
+                    playToField(card, 'playerHand');
+                    proceedToDrawPhase();
+                }, 500);
+            } else if (matches.length === 1) {
+                // 1枚マッチ -> 自動で獲得
+                state.phase = 'animating';
+                updateUI();
+                setTimeout(() => {
+                    captureCards(card, matches[0], 'playerHand', 'playerCaptured');
+                    proceedToDrawPhase();
+                }, 500);
+            } else {
+                // 2枚以上マッチ -> プレイヤーが場札を選択するのを待つ
+                state.phase = 'wait_field';
+                updateUI();
+            }
+        }
+
+        // プレイヤーのアクション：場札クリック
+        function handleFieldClick(fieldCard) {
+            if (state.turn !== 'player' || state.phase !== 'wait_field') return;
+            if (!state.selectedHandCard) return;
+
+            if (fieldCard.month === state.selectedHandCard.month) {
+                state.phase = 'animating';
+                captureCards(state.selectedHandCard, fieldCard, 'playerHand', 'playerCaptured');
+                updateUI();
+                setTimeout(() => {
+                    proceedToDrawPhase();
+                }, 500);
+            } else {
+                // 違う月をクリックしたら選択解除
+                state.selectedHandCard = null;
+                state.phase = 'wait_hand';
+                updateUI();
+            }
+        }
+
+        // 共通アクション：カードを場に出す
+        function playToField(card, sourceArrayName) {
+            state[sourceArrayName] = state[sourceArrayName].filter(c => c.id !== card.id);
+            state.field.push(card);
+        }
+
+        // 共通アクション：カードを獲得する
+        function captureCards(playedCard, fieldCard, sourceArrayName, targetCapturedName) {
+            // 手札/山札から削除
+            if (sourceArrayName) {
+                state[sourceArrayName] = state[sourceArrayName].filter(c => c.id !== playedCard.id);
+            }
+            // 場から削除
+            state.field = state.field.filter(c => c.id !== fieldCard.id);
+            
+            // 獲得
+            state[targetCapturedName].push(playedCard, fieldCard);
+        }
+
+        // 山札を引くフェーズ
+        function proceedToDrawPhase() {
+            if (state.deck.length === 0) {
+                endTurn();
+                return;
+            }
+
+            state.phase = 'drawing';
+            state.selectedHandCard = null;
+            updateUI();
+
+            setTimeout(() => {
+                const drawnCard = state.deck.shift();
+                showMessage(`山札: ${drawnCard.month}月を引きました`, 1000);
+                
+                setTimeout(() => {
+                    const matches = state.field.filter(c => c.month === drawnCard.month);
+                    const isPlayer = state.turn === 'player';
+                    const targetCap = isPlayer ? 'playerCaptured' : 'cpuCaptured';
+
+                    if (matches.length === 0) {
+                        state.field.push(drawnCard);
+                    } else {
+                        // シンプルにするため、2枚以上あっても最高得点のものと自動マッチ
+                        matches.sort((a,b) => b.point - a.point);
+                        captureCards(drawnCard, matches[0], null, targetCap);
+                    }
+                    
+                    updateUI();
+                    setTimeout(endTurn, 800);
+
+                }, 1000);
+
+            }, 500);
+        }
+
+        // ターン終了判定
+        function endTurn() {
+            if (state.playerHand.length === 0 && state.cpuHand.length === 0) {
+                endGame();
+                return;
+            }
+
+            state.turn = state.turn === 'player' ? 'cpu' : 'player';
+            state.phase = 'wait_hand';
+            state.selectedHandCard = null;
+            
+            if (state.turn === 'cpu') {
+                updateUI();
+                setTimeout(cpuPlay, 1000);
+            } else {
+                updateUI();
+                showMessage('あなたの番です', 1000);
+            }
+        }
+
+        // CPUのAI（簡易）
+        function cpuPlay() {
+            if (state.cpuHand.length === 0) {
+                proceedToDrawPhase();
+                return;
+            }
+
+            state.phase = 'animating';
+            
+            // 場札とマッチする手札を探す
+            let playablePairs = [];
+            state.cpuHand.forEach(hCard => {
+                state.field.forEach(fCard => {
+                    if (hCard.month === fCard.month) {
+                        playablePairs.push({ handCard: hCard, fieldCard: fCard, score: hCard.point + fCard.point });
+                    }
+                });
+            });
+
+            if (playablePairs.length > 0) {
+                // 最も点数が高くなるペアを選択
+                playablePairs.sort((a,b) => b.score - a.score);
+                const bestPair = playablePairs[0];
+                
+                showMessage('CPUが札を合わせました', 1000);
+                captureCards(bestPair.handCard, bestPair.fieldCard, 'cpuHand', 'cpuCaptured');
+            } else {
+                // マッチしない場合、最も点数の低い（カス）を捨てる
+                state.cpuHand.sort((a,b) => a.point - b.point);
+                const discardCard = state.cpuHand[0];
+                showMessage('CPUが札を出しました', 1000);
+                playToField(discardCard, 'cpuHand');
+            }
+
+            updateUI();
+            
+            setTimeout(() => {
+                proceedToDrawPhase();
+            }, 1000);
+        }
+
+        // ゲーム終了処理
+        function endGame() {
+            const pScore = state.playerCaptured.reduce((sum, c) => sum + c.point, 0);
+            const cScore = state.cpuCaptured.reduce((sum, c) => sum + c.point, 0);
+            
+            let title = pScore > cScore ? "あなたの勝利！" : pScore < cScore ? "CPUの勝利" : "引き分け";
+
+            document.getElementById('result-title').innerText = title;
+            document.getElementById('final-player-score').innerText = pScore;
+            document.getElementById('final-cpu-score').innerText = cScore;
+            
+            setTimeout(() => {
+                document.getElementById('result-modal').classList.add('active');
+            }, 1000);
+        }
+
+        // ゲーム開始
+        window.onload = initGame;
+
+    </script>
+</body>
+</html>
