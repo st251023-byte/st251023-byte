@@ -196,6 +196,43 @@
             text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
         }
 
+        /* 役表示パネル */
+        .yaku-panel {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-top: 5px;
+        }
+
+        .yaku-badge {
+            background: linear-gradient(135deg, #d4af37, #997a00);
+            color: #111;
+            font-size: 0.75rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .reach-badge {
+            background: rgba(74, 144, 226, 0.1);
+            color: #4a90e2;
+            border: 1px solid #4a90e2;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            text-align: center;
+            animation: pulse-reach 2s infinite;
+        }
+
+        @keyframes pulse-reach {
+            0% { opacity: 0.7; }
+            50% { opacity: 1; box-shadow: 0 0 8px rgba(74, 144, 226, 0.4); }
+            100% { opacity: 0.7; }
+        }
+
         .name-tag {
             font-size: 0.9rem;
             color: #aaa;
@@ -226,7 +263,6 @@
             justify-content: space-between;
             padding: 6px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-            overflow: hidden;
         }
 
         /* ガラスのような反射エフェクト（グラスモーフィズム） */
@@ -236,6 +272,8 @@
             top: 0; left: 0; right: 0; height: 45%;
             background: linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%);
             pointer-events: none;
+            border-top-left-radius: inherit;
+            border-top-right-radius: inherit;
         }
 
         @media (min-width: 768px) {
@@ -276,6 +314,45 @@
             0% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.5); }
             70% { box-shadow: 0 0 0 15px rgba(212, 175, 55, 0); }
             100% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0); }
+        }
+
+        /* 初心者サポート用ヒント */
+        .playable-hint {
+            box-shadow: 0 0 15px rgba(74, 144, 226, 0.8) !important;
+            border-color: #4a90e2 !important;
+            transform: translateY(-5px);
+        }
+        
+        .best-hint {
+            box-shadow: 0 0 20px rgba(212, 175, 55, 1) !important;
+            border-color: #d4af37 !important;
+            animation: pulse-best 1.5s infinite;
+            z-index: 5;
+        }
+
+        @keyframes pulse-best {
+            0% { transform: translateY(-5px) scale(1); box-shadow: 0 0 15px rgba(212, 175, 55, 0.8); }
+            50% { transform: translateY(-10px) scale(1.05); box-shadow: 0 0 25px rgba(212, 175, 55, 1); }
+            100% { transform: translateY(-5px) scale(1); box-shadow: 0 0 15px rgba(212, 175, 55, 0.8); }
+        }
+
+        .recommend-badge {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #ff4754, #c9171e);
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+            padding: 3px 8px;
+            border-radius: 12px;
+            white-space: nowrap;
+            z-index: 10;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.6);
+            pointer-events: none;
+            border: 1px solid rgba(255,255,255,0.3);
+            letter-spacing: 1px;
         }
 
         /* 種類による背景色とボーダー（ダーク＆ネオンスタイル） */
@@ -501,6 +578,7 @@
             <div class="info-panel">
                 <div class="name-tag">CPU</div>
                 <div class="score-box" id="cpu-score">0</div>
+                <div class="yaku-panel" id="cpu-yaku"></div>
             </div>
             <div class="hand-container" id="cpu-hand"></div>
             <div class="captured-area" id="cpu-captured"></div>
@@ -521,6 +599,7 @@
             <div class="info-panel">
                 <div class="name-tag">YOU</div>
                 <div class="score-box" id="player-score">0</div>
+                <div class="yaku-panel" id="player-yaku"></div>
             </div>
             <div class="hand-container" id="player-hand"></div>
             <div class="captured-area" id="player-captured"></div>
@@ -556,10 +635,25 @@
                     <li>場に同じ柄がない場合は、好きな札を場に出します。</li>
                     <li>その後、山札が1枚めくられ、場札と合えばさらに札を獲得できます。</li>
                 </ol>
+                <p style="margin-top:10px; color:var(--accent-gold); font-size:0.9rem;">
+                    💡 <b>初心者アシスト：</b> 取れる手札は青く光り、一番高得点（または役になる）札に「おすすめ」マークが出ます！取れる札がない場合は、相手に取られても被害が少ない札（カス札など）をおすすめします。
+                </p>
             </div>
 
             <div class="help-section">
-                <h3>🃏 札の種類と点数</h3>
+                <h3>🎴 役とボーナス（札の点数に加算）</h3>
+                <ul>
+                    <li><span class="pt-badge" style="background:#d4af37; color:#111;">五光</span> 光札5枚 (+100点)</li>
+                    <li><span class="pt-badge" style="background:#d4af37; color:#111;">四光</span> 光札4枚 (+80点) ※小野道風なし</li>
+                    <li><span class="pt-badge" style="background:#d4af37; color:#111;">三光</span> 光札3枚 (+50点) ※小野道風なし</li>
+                    <li><span class="pt-badge pt-10">猪鹿蝶</span> 萩に猪・紅葉に鹿・牡丹に蝶 (+50点)</li>
+                    <li><span class="pt-badge pt-5">赤短・青短</span> それぞれ3枚 (+50点)</li>
+                </ul>
+                <p style="font-size: 0.8rem; color:#aaa; margin-top:5px;">※タネ5枚、短冊5枚、カス10枚でもボーナスが入ります。</p>
+            </div>
+
+            <div class="help-section">
+                <h3>🃏 札の種類と基本点数</h3>
                 <ul>
                     <li><span class="pt-badge pt-20">光 (20点)</span> 豪華な柄。高得点！</li>
                     <li><span class="pt-badge pt-10">タネ (10点)</span> 動物や鳥などが描かれた札。</li>
@@ -604,7 +698,6 @@
         ];
 
         const TYPE_LABELS = ['カス', '短冊', 'タネ', '光'];
-        const TYPE_CLASSES = ['type-kasu', 'type-tanzaku', 'type-tane', 'type-hikari'];
         const POINTS = [1, 5, 10, 20];
 
         // 状態管理
@@ -646,7 +739,7 @@
             el.dataset.id = card.id;
 
             if (!faceDown) {
-                el.title = card.name; // マウスホバーでも名前を確認できるように追加
+                el.title = card.name;
                 const iconText = ICONS[card.month - 1];
                 const typeLabel = TYPE_LABELS[card.type];
 
@@ -691,8 +784,125 @@
             showMessage('あなたの番です', 1500);
         }
 
+        // 役の判定とスコア計算
+        function calculateScoreAndYaku(capturedCards) {
+            let baseScore = capturedCards.reduce((sum, c) => sum + c.point, 0);
+            let yakuList = [];
+            let reachList = [];
+            let bonus = 0;
+
+            const hikari = capturedCards.filter(c => c.type === 3);
+            const tane = capturedCards.filter(c => c.type === 2);
+            const tanzaku = capturedCards.filter(c => c.type === 1);
+            const kasu = capturedCards.filter(c => c.type === 0);
+
+            const hasRain = hikari.some(c => c.name === '小野道風');
+            
+            // 光系
+            if (hikari.length === 5) { yakuList.push('五光'); bonus += 100; }
+            else if (hikari.length === 4) {
+                if (hasRain) { yakuList.push('雨四光'); bonus += 70; }
+                else { yakuList.push('四光'); bonus += 80; reachList.push('五光リーチ'); }
+            } else if (hikari.length === 3) {
+                if (!hasRain) { yakuList.push('三光'); bonus += 50; }
+                if (hasRain) reachList.push('雨四光リーチ');
+                else reachList.push('四光リーチ');
+            } else if (hikari.length === 2 && !hasRain) {
+                reachList.push('三光リーチ');
+            }
+
+            // 猪鹿蝶
+            const ino = tane.some(c => c.name === '萩に猪');
+            const shika = tane.some(c => c.name === '紅葉に鹿');
+            const cho = tane.some(c => c.name === '牡丹に蝶');
+            const inoShikaChoCount = [ino, shika, cho].filter(Boolean).length;
+            
+            if (inoShikaChoCount === 3) { yakuList.push('猪鹿蝶'); bonus += 50; }
+            else if (inoShikaChoCount === 2) reachList.push('猪鹿蝶リーチ');
+
+            // 赤短・青短
+            const akadanCount = tanzaku.filter(c => c.name === '赤短').length;
+            const aodanCount = tanzaku.filter(c => c.name === '青短').length;
+
+            if (akadanCount === 3) { yakuList.push('赤短'); bonus += 50; }
+            else if (akadanCount === 2) reachList.push('赤短リーチ');
+
+            if (aodanCount === 3) { yakuList.push('青短'); bonus += 50; }
+            else if (aodanCount === 2) reachList.push('青短リーチ');
+
+            // タネ・短冊・カス
+            if (tane.length >= 5) { yakuList.push(`タネ(${tane.length})`); bonus += 10 + (tane.length - 5) * 10; }
+            else if (tane.length === 4) reachList.push('タネリーチ');
+
+            if (tanzaku.length >= 5) { yakuList.push(`短冊(${tanzaku.length})`); bonus += 10 + (tanzaku.length - 5) * 10; }
+            else if (tanzaku.length === 4) reachList.push('短冊リーチ');
+
+            if (kasu.length >= 10) { yakuList.push(`カス(${kasu.length})`); bonus += 10 + (kasu.length - 10) * 10; }
+            else if (kasu.length === 9) reachList.push('カスリーチ');
+
+            return { score: baseScore + bonus, yaku: yakuList, reach: reachList };
+        }
+
+        function renderYaku(elementId, yakuData) {
+            const el = document.getElementById(elementId);
+            el.innerHTML = '';
+            
+            // 成立役の表示
+            yakuData.yaku.forEach(y => {
+                const div = document.createElement('div');
+                div.className = 'yaku-badge';
+                div.innerText = y;
+                el.appendChild(div);
+            });
+            
+            // リーチの表示（成立役が多すぎない場合のみ）
+            if (yakuData.yaku.length < 3) {
+                yakuData.reach.forEach(r => {
+                    const div = document.createElement('div');
+                    div.className = 'reach-badge';
+                    div.innerText = r;
+                    el.appendChild(div);
+                });
+            }
+        }
+
         // UIの更新
         function updateUI() {
+            // 初心者サポート用の計算
+            let bestCardId = null;
+            let playableCardIds = new Set();
+
+            if (state.turn === 'player' && state.phase === 'wait_hand') {
+                let bestScore = -1;
+                state.playerHand.forEach(hCard => {
+                    state.field.forEach(fCard => {
+                        if (hCard.month === fCard.month) {
+                            playableCardIds.add(hCard.id);
+                            
+                            // 役ボーナスを含めたシミュレーションスコア
+                            const simCaptured = [...state.playerCaptured, hCard, fCard];
+                            const simResult = calculateScoreAndYaku(simCaptured);
+                            
+                            if (simResult.score > bestScore) {
+                                bestScore = simResult.score;
+                                bestCardId = hCard.id;
+                            }
+                        }
+                    });
+                });
+
+                // 取れる札が1枚もない場合は、相手に取られても痛くない（点数が低い）札をおすすめする
+                if (playableCardIds.size === 0 && state.playerHand.length > 0) {
+                    let lowestPoint = Infinity;
+                    state.playerHand.forEach(hCard => {
+                        if (hCard.point < lowestPoint) {
+                            lowestPoint = hCard.point;
+                            bestCardId = hCard.id;
+                        }
+                    });
+                }
+            }
+
             // Player Hand
             const pHandEl = document.getElementById('player-hand');
             pHandEl.innerHTML = '';
@@ -701,6 +911,18 @@
                 if (state.selectedHandCard && state.selectedHandCard.id === card.id) {
                     el.classList.add('selected');
                 }
+
+                // ヒントの反映
+                if (bestCardId === card.id) {
+                    el.classList.add('best-hint');
+                    const badge = document.createElement('div');
+                    badge.className = 'recommend-badge';
+                    badge.innerText = 'おすすめ';
+                    el.appendChild(badge);
+                } else if (playableCardIds.has(card.id)) {
+                    el.classList.add('playable-hint');
+                }
+
                 el.onclick = () => handleHandClick(card);
                 pHandEl.appendChild(el);
             });
@@ -724,7 +946,6 @@
 
             state.field.forEach(card => {
                 const el = createCardElement(card);
-                // ハイライト処理（手札が選択されている時、マッチする札を光らせる）
                 if (state.selectedHandCard && card.month === state.selectedHandCard.month) {
                     el.classList.add('highlight');
                 }
@@ -744,13 +965,17 @@
                 deckStack.appendChild(el);
             }
 
-            // Scores
-            const pScore = state.playerCaptured.reduce((sum, c) => sum + c.point, 0);
-            const cScore = state.cpuCaptured.reduce((sum, c) => sum + c.point, 0);
-            document.getElementById('player-score').innerText = pScore;
-            document.getElementById('cpu-score').innerText = cScore;
+            // Scores & Yaku
+            const pResult = calculateScoreAndYaku(state.playerCaptured);
+            const cResult = calculateScoreAndYaku(state.cpuCaptured);
+            
+            document.getElementById('player-score').innerText = pResult.score;
+            document.getElementById('cpu-score').innerText = cResult.score;
 
-            // Captured visual (mini icons)
+            renderYaku('player-yaku', pResult);
+            renderYaku('cpu-yaku', cResult);
+
+            // Captured visual
             renderCaptured('player-captured', state.playerCaptured);
             renderCaptured('cpu-captured', state.cpuCaptured);
         }
@@ -758,13 +983,13 @@
         function renderCaptured(elementId, capturedArray) {
             const el = document.getElementById(elementId);
             el.innerHTML = '';
-            // 光とタネ・短冊のみ目立たせて表示（カスは省略かグレー）
             capturedArray.sort((a,b) => b.type - a.type).forEach(card => {
                 const mini = document.createElement('div');
                 mini.className = 'captured-mini';
                 if(card.type === 3) mini.classList.add('hikari');
                 if(card.type === 2) mini.classList.add('tane');
                 mini.innerText = ICONS[card.month - 1];
+                mini.title = card.name;
                 el.appendChild(mini);
             });
         }
@@ -778,17 +1003,22 @@
             }, duration);
         }
 
-        // プレイヤーのアクション：手札クリック
+        // プレイヤーアクション：手札クリック
         function handleHandClick(card) {
             if (state.turn !== 'player' || state.phase !== 'wait_hand') return;
 
+            // 選択解除
+            if (state.selectedHandCard && state.selectedHandCard.id === card.id) {
+                state.selectedHandCard = null;
+                updateUI();
+                return;
+            }
+
             state.selectedHandCard = card;
             
-            // 場にマッチするカードがあるかチェック
             const matches = state.field.filter(c => c.month === card.month);
             
             if (matches.length === 0) {
-                // マッチなし -> そのまま場に出す
                 state.phase = 'animating';
                 updateUI();
                 setTimeout(() => {
@@ -796,7 +1026,6 @@
                     proceedToDrawPhase();
                 }, 500);
             } else if (matches.length === 1) {
-                // 1枚マッチ -> 自動で獲得
                 state.phase = 'animating';
                 updateUI();
                 setTimeout(() => {
@@ -804,13 +1033,13 @@
                     proceedToDrawPhase();
                 }, 500);
             } else {
-                // 2枚以上マッチ -> プレイヤーが場札を選択するのを待つ
                 state.phase = 'wait_field';
                 updateUI();
+                showMessage('取る札を選んでください', 1500);
             }
         }
 
-        // プレイヤーのアクション：場札クリック
+        // プレイヤーアクション：場札クリック
         function handleFieldClick(fieldCard) {
             if (state.turn !== 'player' || state.phase !== 'wait_field') return;
             if (!state.selectedHandCard) return;
@@ -823,29 +1052,22 @@
                     proceedToDrawPhase();
                 }, 500);
             } else {
-                // 違う月をクリックしたら選択解除
                 state.selectedHandCard = null;
                 state.phase = 'wait_hand';
                 updateUI();
             }
         }
 
-        // 共通アクション：カードを場に出す
         function playToField(card, sourceArrayName) {
             state[sourceArrayName] = state[sourceArrayName].filter(c => c.id !== card.id);
             state.field.push(card);
         }
 
-        // 共通アクション：カードを獲得する
         function captureCards(playedCard, fieldCard, sourceArrayName, targetCapturedName) {
-            // 手札/山札から削除
             if (sourceArrayName) {
                 state[sourceArrayName] = state[sourceArrayName].filter(c => c.id !== playedCard.id);
             }
-            // 場から削除
             state.field = state.field.filter(c => c.id !== fieldCard.id);
-            
-            // 獲得
             state[targetCapturedName].push(playedCard, fieldCard);
         }
 
@@ -872,7 +1094,6 @@
                     if (matches.length === 0) {
                         state.field.push(drawnCard);
                     } else {
-                        // シンプルにするため、2枚以上あっても最高得点のものと自動マッチ
                         matches.sort((a,b) => b.point - a.point);
                         captureCards(drawnCard, matches[0], null, targetCap);
                     }
@@ -881,7 +1102,6 @@
                     setTimeout(endTurn, 800);
 
                 }, 1000);
-
             }, 500);
         }
 
@@ -905,7 +1125,7 @@
             }
         }
 
-        // CPUのAI（簡易）
+        // CPUのAI（簡易版を補完）
         function cpuPlay() {
             if (state.cpuHand.length === 0) {
                 proceedToDrawPhase();
@@ -914,12 +1134,14 @@
 
             state.phase = 'animating';
             
-            // 場札とマッチする手札を探す
             let playablePairs = [];
             state.cpuHand.forEach(hCard => {
                 state.field.forEach(fCard => {
                     if (hCard.month === fCard.month) {
-                        playablePairs.push({ handCard: hCard, fieldCard: fCard, score: hCard.point + fCard.point });
+                        // 役を考慮したAIのスコアリング
+                        const simCaptured = [...state.cpuCaptured, hCard, fCard];
+                        const simResult = calculateScoreAndYaku(simCaptured);
+                        playablePairs.push({ handCard: hCard, fieldCard: fCard, score: simResult.score });
                     }
                 });
             });
@@ -929,43 +1151,45 @@
                 playablePairs.sort((a,b) => b.score - a.score);
                 const bestPair = playablePairs[0];
                 
-                showMessage('CPUが札を合わせました', 1000);
-                captureCards(bestPair.handCard, bestPair.fieldCard, 'cpuHand', 'cpuCaptured');
+                // CPUが札を選ぶ演出
+                showMessage('CPUが札を出しました', 800);
+                setTimeout(() => {
+                    captureCards(bestPair.handCard, bestPair.fieldCard, 'cpuHand', 'cpuCaptured');
+                    updateUI();
+                    setTimeout(proceedToDrawPhase, 800);
+                }, 800);
             } else {
-                // マッチしない場合、最も点数の低い（カス）を捨てる
-                state.cpuHand.sort((a,b) => a.point - b.point);
-                const discardCard = state.cpuHand[0];
-                showMessage('CPUが札を出しました', 1000);
-                playToField(discardCard, 'cpuHand');
+                // マッチしない場合はランダムに場に出す（より賢くするならカスを優先など）
+                const randomCardIndex = Math.floor(Math.random() * state.cpuHand.length);
+                const playCard = state.cpuHand[randomCardIndex];
+                
+                showMessage('CPUが札を出しました', 800);
+                setTimeout(() => {
+                    playToField(playCard, 'cpuHand');
+                    updateUI();
+                    setTimeout(proceedToDrawPhase, 800);
+                }, 800);
             }
-
-            updateUI();
-            
-            setTimeout(() => {
-                proceedToDrawPhase();
-            }, 1000);
         }
 
         // ゲーム終了処理
         function endGame() {
-            const pScore = state.playerCaptured.reduce((sum, c) => sum + c.point, 0);
-            const cScore = state.cpuCaptured.reduce((sum, c) => sum + c.point, 0);
-            
-            let title = pScore > cScore ? "あなたの勝利！" : pScore < cScore ? "CPUの勝利" : "引き分け";
+            const pResult = calculateScoreAndYaku(state.playerCaptured);
+            const cResult = calculateScoreAndYaku(state.cpuCaptured);
 
-            document.getElementById('result-title').innerText = title;
-            document.getElementById('final-player-score').innerText = pScore;
-            document.getElementById('final-cpu-score').innerText = cScore;
+            document.getElementById('final-player-score').innerText = pResult.score;
+            document.getElementById('final-cpu-score').innerText = cResult.score;
             
-            setTimeout(() => {
-                document.getElementById('result-modal').classList.add('active');
-            }, 1000);
+            let resultText = "引き分け";
+            if(pResult.score > cResult.score) resultText = "あなたの勝ち！";
+            if(pResult.score < cResult.score) resultText = "CPUの勝ち";
+
+            document.getElementById('result-title').innerText = resultText;
+            document.getElementById('result-modal').classList.add('active');
         }
 
-        // ゲーム開始
+        // アプリ起動
         window.onload = initGame;
-
     </script>
 </body>
-</html>
 </html>
